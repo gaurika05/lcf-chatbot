@@ -54,17 +54,29 @@ with st.sidebar:
     
     # Quick actions
     st.subheader("Quick Actions")
-    if st.button("🏢 About LCF"):
-        st.session_state.messages.append({"role": "user", "content": "Tell me about LCF Group"})
+    if st.button("\U0001F3E2 About LCF"):
+        user_msg = "Tell me about LCF Group"
+        st.session_state.messages.append({"role": "user", "content": user_msg})
+        response = chatbot_logic.generate_empathetic_response(user_msg)
+        st.session_state.messages.append({"role": "assistant", "content": response})
     
-    if st.button("💰 Our Products"):
-        st.session_state.messages.append({"role": "user", "content": "What products does LCF offer?"})
+    if st.button("\U0001F4B0 Our Products"):
+        user_msg = "What products does LCF offer?"
+        st.session_state.messages.append({"role": "user", "content": user_msg})
+        response = chatbot_logic.generate_empathetic_response(user_msg)
+        st.session_state.messages.append({"role": "assistant", "content": response})
     
-    if st.button("📋 Eligibility"):
-        st.session_state.messages.append({"role": "user", "content": "What are the eligibility requirements?"})
+    if st.button("\U0001F4CB Eligibility"):
+        user_msg = "What are the eligibility requirements?"
+        st.session_state.messages.append({"role": "user", "content": user_msg})
+        response = chatbot_logic.generate_empathetic_response(user_msg)
+        st.session_state.messages.append({"role": "assistant", "content": response})
     
-    if st.button("📞 Contact Info"):
-        st.session_state.messages.append({"role": "user", "content": "How can I contact LCF?"})
+    if st.button("\U0001F4DE Contact Info"):
+        user_msg = "How can I contact LCF?"
+        st.session_state.messages.append({"role": "user", "content": user_msg})
+        response = chatbot_logic.generate_empathetic_response(user_msg)
+        st.session_state.messages.append({"role": "assistant", "content": response})
     
     st.markdown("---")
     
@@ -113,50 +125,44 @@ else:
     
     with col1:
         st.subheader("📋 Deal Information")
-        
-        # Inputs
-        industry = st.selectbox(
-            "Business Industry", 
-            ["Retail", "Construction", "Healthcare", "Restaurants", "Transportation", "Manufacturing", "Technology", "Others"]
-        )
-        
-        monthly_revenue = st.number_input(
-            "Monthly Revenue (Rs)", 
-            step=10000, 
-            min_value=10000,
-            help="Enter your average monthly business revenue"
-        )
-        
-        loan_amount = st.number_input(
-            "Requested Loan Amount (Rs)", 
-            step=10000, 
-            min_value=10000,
-            help="Enter the loan amount you're requesting"
-        )
-        
-        loan_type = st.selectbox(
-            "Loan Type", 
-            ["Working Capital", "Line of Credit", "Merchant Cash Advance", "Equipment Financing", "Invoice Factoring"]
-        )
-        
-        business_age = st.selectbox(
-            "Time in Business", 
-            ["<1 year", "1-2 years", "2-5 years", ">5 years"]
-        )
-        
-        tenure = st.selectbox(
-            "Requested Tenure", 
-            ["3 months", "6 months", "12 months", "18 months", "24 months"]
-        )
-        
-        credit_score = st.selectbox(
-            "Business Credit Score", 
-            ["Excellent (750+)", "Good (700-749)", "Fair (650-699)", "Poor (<650)", "Unknown"]
-        )
-        
-        # Submit button
-        if st.button("🔍 Evaluate Deal", type="primary"):
-            # Create deal evaluation prompt
+
+        with st.form("deal_eval_form", clear_on_submit=False):
+            industry = st.selectbox(
+                "Business Industry", 
+                ["Retail", "Construction", "Healthcare", "Restaurants", "Transportation", "Manufacturing", "Technology", "Others"]
+            )
+            monthly_revenue = st.number_input(
+                "Monthly Revenue (Rs)", 
+                step=10000, 
+                min_value=10000,
+                help="Enter your average monthly business revenue"
+            )
+            loan_amount = st.number_input(
+                "Requested Loan Amount (Rs)", 
+                step=10000, 
+                min_value=10000,
+                help="Enter the loan amount you're requesting"
+            )
+            loan_type = st.selectbox(
+                "Loan Type", 
+                ["Working Capital", "Line of Credit", "Merchant Cash Advance", "Equipment Financing", "Invoice Factoring"]
+            )
+            business_age = st.selectbox(
+                "Time in Business", 
+                ["<1 year", "1-2 years", "2-5 years", ">5 years"]
+            )
+            tenure = st.selectbox(
+                "Requested Tenure", 
+                ["3 months", "6 months", "12 months", "18 months", "24 months"]
+            )
+            credit_score = st.selectbox(
+                "Business Credit Score", 
+                ["Excellent (750+)", "Good (700-749)", "Fair (650-699)", "Poor (<650)", "Unknown"]
+            )
+
+            submitted = st.form_submit_button("🔍 Evaluate Deal", type="primary")
+
+        if submitted:
             deal_info = f"""
             Deal Information:
             - Business Industry: {industry}
@@ -166,8 +172,8 @@ else:
             - Time in Business: {business_age}
             - Requested Tenure: {tenure}
             - Credit Score: {credit_score}
-            """
-            
+    """
+
             evaluation_prompt = f"""
             You are an expert AI underwriter at LCF Group. Evaluate the following loan request based on LCF's underwriting criteria.
             
@@ -182,13 +188,11 @@ else:
             6. **Next Steps**: What the applicant should do next
             
             Be professional but empathetic in your response. Format the response clearly with headers.
-            """
-            
+    """
+
             with col2:
                 st.subheader("📊 Evaluation Results")
-                
                 with st.spinner("🔍 Analyzing deal with AI..."):
-                    # Use chatbot logic for deal evaluation
                     deal_data = {
                         'industry': industry,
                         'monthly_revenue': monthly_revenue,
@@ -198,43 +202,37 @@ else:
                         'tenure': tenure,
                         'credit_score': credit_score
                     }
-                    
                     evaluation = chatbot_logic.evaluate_deal(deal_data)
-                    
-                    # Format the evaluation response
-                    response = f"""
-                    ## 📊 Deal Evaluation Results
-                    
-                    ### 🎯 Risk Assessment
-                    **Risk Level:** {evaluation['risk_level']}
-                    **Recommendation:** {evaluation['recommendation']}
-                    **Confidence:** {evaluation['confidence']}
-                    
-                    ### 💰 Suggested Product
-                    **Recommended Product:** {evaluation['suggested_product']}
-                    
-                    ### 📋 Risk Factors
-                    """
-                    
+                    # Format and display the evaluation result
+                    result_md = f"""
+## 📊 Deal Evaluation Results
+
+### 🎯 Risk Assessment
+**Risk Level:** {evaluation['risk_level']}\n
+**Recommendation:** {evaluation['recommendation']}\n
+**Confidence:** {evaluation['confidence']}
+
+### 💰 Suggested Product
+**Recommended Product:** {evaluation['suggested_product']}
+
+### 📋 Risk Factors
+"""
                     for factor in evaluation['risk_factors']:
-                        response += f"• {factor}\n"
-                    
-                    response += f"""
-                    ### 💳 Suggested Loan Terms
-                    **Amount:** ₹{evaluation['loan_terms']['suggested_amount']:,.0f}
-                    **Interest Rate:** {evaluation['loan_terms']['interest_rate']}
-                    **Tenure:** {evaluation['loan_terms']['tenure']}
-                    **Processing Fee:** {evaluation['loan_terms']['processing_fee']}
-                    
-                    ### 🚀 Next Steps
-                    """
-                    
+                        result_md += f"- {factor}\n"
+                    result_md += f"""
+
+### 💳 Suggested Loan Terms
+**Amount:** ₹{evaluation['loan_terms']['suggested_amount']:,.0f}\n
+**Interest Rate:** {evaluation['loan_terms']['interest_rate']}\n
+**Tenure:** {evaluation['loan_terms']['tenure']}\n
+**Processing Fee:** {evaluation['loan_terms']['processing_fee']}\n
+### 🚀 Next Steps
+"""
                     for step in evaluation['next_steps']:
-                        response += f"• {step}\n"
-                    
+                        result_md += f"- {step}\n"
                     st.success("✅ Evaluation Complete!")
                     st.markdown("---")
-                    st.markdown(response)
+                    st.markdown(result_md)
                     
                     # Add to chat history for reference
                     st.session_state.messages.append({
@@ -243,36 +241,35 @@ else:
                     })
                     st.session_state.messages.append({
                         "role": "assistant", 
-                        "content": f"Deal Evaluation Results:\n\n{response}"
+                        "content": f"Deal Evaluation Results:\n\n{result_md}"
                     })
     
     with col2:
-        if not st.button("🔍 Evaluate Deal", key="hidden_button"):
-            st.subheader("💡 Tips for Better Evaluation")
-            st.markdown("""
-            **To get the most accurate evaluation:**
-            
-            ✅ Provide accurate financial information
-            ✅ Include all relevant business details
-            ✅ Be honest about credit history
-            ✅ Consider your business needs carefully
-            
-            **Common factors that improve approval:**
-            - Stable monthly revenue
-            - Good credit history
-            - Clear business purpose
-            - Realistic loan amount
-            """)
-            
-            st.markdown("---")
-            st.subheader("📞 Need Help?")
-            st.markdown("""
-            If you need assistance with your application:
-            
-            📧 Email: applications@lcfgroup.com
-            📞 Phone: +91-XXXXXXXXXX
-            💬 Chat: Use the general chat mode
-            """)
+        # Remove the duplicate button and just show tips and help
+        st.subheader("💡 Tips for Better Evaluation")
+        st.markdown("""
+        **To get the most accurate evaluation:**
+        
+        ✅ Provide accurate financial information\n
+        ✅ Include all relevant business details\n
+        ✅ Be honest about credit history\n
+        ✅ Consider your business needs carefully
+        
+        **Common factors that improve approval:**
+        - Stable monthly revenue
+        - Good credit history
+        - Clear business purpose
+        - Realistic loan amount
+        """)
+        st.markdown("---")
+        st.subheader("📞 Need Help?")
+        st.markdown("""
+        If you need assistance with your application:
+        
+        📧 Email: applications@lcfgroup.com
+        📞 Phone: +91-XXXXXXXXXX
+        💬 Chat: Use the general chat mode
+        """)
 
 # Footer
 st.markdown("---")
