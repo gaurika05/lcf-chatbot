@@ -57,9 +57,9 @@ A comprehensive, empathetic AI chatbot for LCF Group that provides company infor
    ```
 
 5. **Run the application**
-   ```bash
-   streamlit run app.py
-   ```
+```bash
+streamlit run app.py
+```
 
 ## 📁 Project Structure
 

@@ -200,16 +200,16 @@ class LCFChatbotLogic:
     
     def _get_greeting_response(self) -> str:
         """Generate warm greeting response"""
-        return f"""👋 Hello! I'm your LCF AI Assistant, here to help you with all things related to LCF Group.
-
-I can help you with:
-• 📊 **Company Information** - Learn about LCF Group
-• 💰 **Our Products** - Explore financing options
-• 📋 **Eligibility** - Check if you qualify
-• 📞 **Contact Information** - Get in touch with us
-• 🔍 **Deal Evaluation** - Get a quick assessment of your loan request
-
-What would you like to know about today? I'm here to make your financial journey smoother! 😊"""
+        return (
+            "👋 Hello! I'm your LCF AI Assistant, here to help you with all things related to LCF Group.\n\n"
+            "I can help you with:\n"
+            "• 📊 **Company Information** - Learn about LCF Group\n"
+            "• 💰 **Our Products** - Explore financing options\n"
+            "• 📋 **Eligibility** - Check if you qualify\n"
+            "• 📞 **Contact Information** - Get in touch with us\n"
+            "• 🔍 **Deal Evaluation** - Get a quick assessment of your loan request\n\n"
+            "What would you like to know about today? I'm here to make your financial journey smoother! 😊"
+        )
     
     def _get_company_info_response(self) -> str:
         """Generate company information response"""
