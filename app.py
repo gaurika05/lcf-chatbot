@@ -2,54 +2,287 @@ import streamlit as st
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
+import json
+from datetime import datetime
+from logic import LCFChatbotLogic
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Setup
-st.set_page_config(page_title="LCF Deal Evaluation Assistant", layout="centered" )
-st.title("LCF Deal Evaluation Assistant")
-st.write("Evaluate loan deals using LCF's AI underwriting assistant.")
+st.set_page_config(
+    page_title="LCF AI Assistant", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Configure Gemini API - use environment variable for security
+# Configure Gemini API
 api_key = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Inputs
-industry = st.selectbox("Business Industry", ["Retail", "Construction", "Healthcare", "Restaurants", "Transportation", "Others"])
-monthly_revenue = st.number_input("Monthly Revenue (Rs)", step=10000, min_value=10000)
-loan_amount = st.number_input("Requested Loan Amount (Rs)", step=10000, min_value=10000)
-loan_type = st.selectbox("Loan type", ["Working Capital", "Line of Credit", "Merchant Cash Advance", "Equipment Financing"])
-business_age = st.selectbox("Time in Business", ["<1 year", "1-2 years", ">2 years"])
-tenure = st.selectbox("Requested Tenure", ["3 months", "6 months", "12 months", "24 months"])
+# Initialize chatbot logic
+chatbot_logic = LCFChatbotLogic()
 
-# Submit
-if st.button("Evaluate Deal"):
-    # Prompt
-    user_input = f"""Business: {industry}
-    Monthly Revenue: Rs{monthly_revenue}
-    Requested Loan: {loan_type}
-    Time in Business: {business_age}
-    Requested Tenure: {tenure}
+# Initialize session state for chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "current_mode" not in st.session_state:
+    st.session_state.current_mode = "chat"
+
+
+
+# Sidebar for navigation
+with st.sidebar:
+    st.title("🤖 LCF AI Assistant")
+    st.markdown("---")
+    
+    # Mode selection
+    mode = st.radio(
+        "Choose Mode:",
+        ["💬 General Chat", "📊 Deal Evaluation"],
+        key="mode_selector"
+    )
+    
+    if mode == "💬 General Chat":
+        st.session_state.current_mode = "chat"
+    else:
+        st.session_state.current_mode = "deal_eval"
+    
+    st.markdown("---")
+    
+    # Quick actions
+    st.subheader("Quick Actions")
+    if st.button("🏢 About LCF"):
+        st.session_state.messages.append({"role": "user", "content": "Tell me about LCF Group"})
+    
+    if st.button("💰 Our Products"):
+        st.session_state.messages.append({"role": "user", "content": "What products does LCF offer?"})
+    
+    if st.button("📋 Eligibility"):
+        st.session_state.messages.append({"role": "user", "content": "What are the eligibility requirements?"})
+    
+    if st.button("📞 Contact Info"):
+        st.session_state.messages.append({"role": "user", "content": "How can I contact LCF?"})
+    
+    st.markdown("---")
+    
+    # Clear chat
+    if st.button("🗑️ Clear Chat"):
+        st.session_state.messages = []
+        st.rerun()
+
+# Main content area
+if st.session_state.current_mode == "chat":
+    # Chat interface
+    st.title("💬 LCF AI Assistant")
+    st.markdown("*Your empathetic financial advisor and company information assistant*")
+    
+    # Display chat messages
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+    
+    # Chat input
+    if prompt := st.chat_input("Ask me anything about LCF Group..."):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Display user message
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        # Generate response
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                # Use chatbot logic for empathetic responses
+                response = chatbot_logic.generate_empathetic_response(prompt)
+                st.markdown(response)
+                
+                # Add assistant response to chat history
+                st.session_state.messages.append({"role": "assistant", "content": response})
+
+else:
+    # Deal Evaluation Mode
+    st.title("📊 LCF Deal Evaluation Assistant")
+    st.markdown("*Evaluate loan deals using LCF's AI underwriting assistant*")
+    
+    # Create two columns for better layout
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.subheader("📋 Deal Information")
+        
+        # Inputs
+        industry = st.selectbox(
+            "Business Industry", 
+            ["Retail", "Construction", "Healthcare", "Restaurants", "Transportation", "Manufacturing", "Technology", "Others"]
+        )
+        
+        monthly_revenue = st.number_input(
+            "Monthly Revenue (Rs)", 
+            step=10000, 
+            min_value=10000,
+            help="Enter your average monthly business revenue"
+        )
+        
+        loan_amount = st.number_input(
+            "Requested Loan Amount (Rs)", 
+            step=10000, 
+            min_value=10000,
+            help="Enter the loan amount you're requesting"
+        )
+        
+        loan_type = st.selectbox(
+            "Loan Type", 
+            ["Working Capital", "Line of Credit", "Merchant Cash Advance", "Equipment Financing", "Invoice Factoring"]
+        )
+        
+        business_age = st.selectbox(
+            "Time in Business", 
+            ["<1 year", "1-2 years", "2-5 years", ">5 years"]
+        )
+        
+        tenure = st.selectbox(
+            "Requested Tenure", 
+            ["3 months", "6 months", "12 months", "18 months", "24 months"]
+        )
+        
+        credit_score = st.selectbox(
+            "Business Credit Score", 
+            ["Excellent (750+)", "Good (700-749)", "Fair (650-699)", "Poor (<650)", "Unknown"]
+        )
+        
+        # Submit button
+        if st.button("🔍 Evaluate Deal", type="primary"):
+            # Create deal evaluation prompt
+            deal_info = f"""
+            Deal Information:
+            - Business Industry: {industry}
+            - Monthly Revenue: Rs {monthly_revenue:,}
+            - Requested Loan Amount: Rs {loan_amount:,}
+            - Loan Type: {loan_type}
+            - Time in Business: {business_age}
+            - Requested Tenure: {tenure}
+            - Credit Score: {credit_score}
+            """
+            
+            evaluation_prompt = f"""
+            You are an expert AI underwriter at LCF Group. Evaluate the following loan request based on LCF's underwriting criteria.
+            
+            {deal_info}
+            
+            Provide a comprehensive evaluation including:
+            1. **Risk Assessment**: Low/Medium/High risk classification
+            2. **Recommendation**: Approve/Reject/Manual Review with confidence level
+            3. **Suggested Product**: Recommend the most suitable LCF product
+            4. **Loan Terms**: Suggested loan amount, interest rate range, and repayment terms
+            5. **Reasoning**: Detailed explanation of your decision
+            6. **Next Steps**: What the applicant should do next
+            
+            Be professional but empathetic in your response. Format the response clearly with headers.
+            """
+            
+            with col2:
+                st.subheader("📊 Evaluation Results")
+                
+                with st.spinner("🔍 Analyzing deal with AI..."):
+                    # Use chatbot logic for deal evaluation
+                    deal_data = {
+                        'industry': industry,
+                        'monthly_revenue': monthly_revenue,
+                        'loan_amount': loan_amount,
+                        'loan_type': loan_type,
+                        'business_age': business_age,
+                        'tenure': tenure,
+                        'credit_score': credit_score
+                    }
+                    
+                    evaluation = chatbot_logic.evaluate_deal(deal_data)
+                    
+                    # Format the evaluation response
+                    response = f"""
+                    ## 📊 Deal Evaluation Results
+                    
+                    ### 🎯 Risk Assessment
+                    **Risk Level:** {evaluation['risk_level']}
+                    **Recommendation:** {evaluation['recommendation']}
+                    **Confidence:** {evaluation['confidence']}
+                    
+                    ### 💰 Suggested Product
+                    **Recommended Product:** {evaluation['suggested_product']}
+                    
+                    ### 📋 Risk Factors
+                    """
+                    
+                    for factor in evaluation['risk_factors']:
+                        response += f"• {factor}\n"
+                    
+                    response += f"""
+                    ### 💳 Suggested Loan Terms
+                    **Amount:** ₹{evaluation['loan_terms']['suggested_amount']:,.0f}
+                    **Interest Rate:** {evaluation['loan_terms']['interest_rate']}
+                    **Tenure:** {evaluation['loan_terms']['tenure']}
+                    **Processing Fee:** {evaluation['loan_terms']['processing_fee']}
+                    
+                    ### 🚀 Next Steps
+                    """
+                    
+                    for step in evaluation['next_steps']:
+                        response += f"• {step}\n"
+                    
+                    st.success("✅ Evaluation Complete!")
+                    st.markdown("---")
+                    st.markdown(response)
+                    
+                    # Add to chat history for reference
+                    st.session_state.messages.append({
+                        "role": "user", 
+                        "content": f"Deal Evaluation Request: {deal_info}"
+                    })
+                    st.session_state.messages.append({
+                        "role": "assistant", 
+                        "content": f"Deal Evaluation Results:\n\n{response}"
+                    })
+    
+    with col2:
+        if not st.button("🔍 Evaluate Deal", key="hidden_button"):
+            st.subheader("💡 Tips for Better Evaluation")
+            st.markdown("""
+            **To get the most accurate evaluation:**
+            
+            ✅ Provide accurate financial information
+            ✅ Include all relevant business details
+            ✅ Be honest about credit history
+            ✅ Consider your business needs carefully
+            
+            **Common factors that improve approval:**
+            - Stable monthly revenue
+            - Good credit history
+            - Clear business purpose
+            - Realistic loan amount
+            """)
+            
+            st.markdown("---")
+            st.subheader("📞 Need Help?")
+            st.markdown("""
+            If you need assistance with your application:
+            
+            📧 Email: applications@lcfgroup.com
+            📞 Phone: +91-XXXXXXXXXX
+            💬 Chat: Use the general chat mode
+            """)
+
+# Footer
+st.markdown("---")
+st.markdown(
     """
-
-    prompt = f"""
-    You are an AI assistant at LCF Group that helps evaluate funding requests based on internal underwriting rules.
-
-    Instructions:
-    - Classify risk level (Low, Medium, High)
-    - Recommend: Approve, Reject, or Manual Review
-    - Suggest a suitable LCF product
-    - Provide short reasoning
-
-    Deal Info:
-    {user_input}
-    """
-
-    with st.spinner("Evalauting with Gemini AI..."):
-        response = model.generate_content(prompt).text
-
-        st.success("Evaluation Complete")
-        st.markdown("### Result")
-        st.markdown(response)
+    <div style='text-align: center; color: #666; font-size: 0.8em;'>
+        🤖 Powered by LCF AI Assistant | 
+        <a href='#' style='color: #666;'>Privacy Policy</a> | 
+        <a href='#' style='color: #666;'>Terms of Service</a>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
